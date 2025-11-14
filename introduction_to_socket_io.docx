@@ -1,0 +1,85 @@
+What is Socket.IO ?
+
+Socket.IO is a JavaScript library for real-time web applications. It enables real-time, bidirectional and event-based communication between web clients and servers. It consists of two parts: a client-side library that runs in the browser, and a server-side library for Node.js.
+
+The Socket.IO connection can be established with different low-level transports.
+
+These transports include:
+
+WebSocket: A full-duplex communication channel over a single TCP connection.
+HTTP Long Polling: A technique where the client makes a request to the server and the server holds the request open until it has data to send back.
+WebTransport: A fallback transport that uses various techniques to simulate real-time communication.
+
+Socket.IO automatically selects the best transport method available between the client and server, ensuring optimal performance and reliability for real-time applications.
+
+Socket.IO is not a webSocket implementation. It uses WebSocket as a transport when available, it adds additional metadata to the messages, and it provides additional features such as automatic reconnection, multiplexing, and rooms.
+
+A pure webSocket can not connect to a Socket.IO server, and a Socket.IO client can not connect to a pure webSocket server.
+
+The Socket.IO library keeps an open TCP connection to the server, which may result in a high battery drain for users.
+
+Here are the main features of Socket.IO that does not exist in WebSocket:
+
+HTTP Long Polling fallback: Socket.IO can fall back to HTTP Long Polling if WebSocket is not supported by the client(may be the browser of client) or server.
+
+Automatic reconnection: Socket.IO can automatically reconnect to the server if the connection is lost. It uses a reconnection algorithm called heartbeat to detect when the connection is lost and to attempt to reconnect. It also supports exponential backoff for reconnection attempts that increases the delay between each attempts to prevent overwhelming the server.
+
+Packet buffering: Socket.IO can buffer packets when the connection is lost and send them when the connection is re-established. This ensures that no data is lost during disconnections.
+
+Acknowledgements: Socket.IO supports acknowledgements, which allows the client and server to confirm that a message has been received.
+
+socket.emit("hello", "world", (response) => {
+  console.log(response); // "got it"
+});
+
+This code demonstrates how to use Socket.IO's acknowledgment callbacks feature. Let me break it down:
+
+socket.emit("hello", "world", callback) - This sends a message to the server with:
+
+Event name:"hello"
+Data:"world"
+Acknowledgment callback function: (response) => { ... }
+Acknowledgment Callback - The third parameter is a callback function that will be executed when the server acknowledges receipt of the message and sends a response back.
+
+Server Response - The server processes the message and calls the acknowledgment with "got it", which triggers the callback on the client side.
+
+Server-side code:
+
+socket.on("hello", (arg, callback) => {
+  console.log(arg); // "world"
+  callback("got it");
+});
+
+
+Key Benefits:
+
+Confirmation: You know the message was received and processed
+Response Data: The server can send back processed results
+Error Handling: You can handle cases where the server doesn't respond
+Request-Response Pattern: Similar to HTTP requests but over WebSocket connection
+This pattern is useful for operations where you need confirmation that the server received and processed your message, like sending a chat message, user authentication, or any operation requiring a response.
+
+Broadcasting: Socket.IO allows you to broadcast messages to multiple clients or specific groups of clients (rooms). This is useful for applications like chat rooms or multiplayer games.
+
+On the server-side, you can send an event to all connected clients or to a subset of clients:
+
+// to all connected clients
+io.emit("hello");
+
+// to all connected clients in the "news" room
+io.to("news").emit("hello");
+
+
+Multiplexing: Socket.IO supports multiplexing, which allows multiple logical connections to be established over a single physical connection. This is useful for applications that require multiple channels of communication between the client and server.
+
+Namespaces allow you to split the logic of your application over a single shared connection. This can be useful for example if you want to create an "admin" channel that only authorized users can join.
+
+io.on("connection", (socket) => {
+  // classic users
+});
+
+io.of("/admin").on("connection", (socket) => {
+  // admin users
+});
+
+
