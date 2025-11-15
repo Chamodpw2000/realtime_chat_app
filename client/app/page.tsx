@@ -14,7 +14,7 @@ export default function Home() {
   const user = useRef<string | null>(null);
   const [chat, setChat] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState<string>("");
-
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
   
 
   useEffect(() => {
@@ -45,8 +45,37 @@ export default function Home() {
       console.log("New user signed up:", data);
       setChat((prev) => [...prev, {content: `${data.user} has joined the chat`, type: 'system' , user: data}]);
     });
+    socket.on("user_typing_status", (data : any) => {
+      console.log("typing status", data);
+      
+      setTypingUsers((prev) => {
+        const userName = data.user?.name || "Unknown User";
+        let updatedUsers;
+        
+        if (data.typing) {
+          if (!prev.includes(userName)) {
+            updatedUsers = [...prev, userName];
+          } else {
+            updatedUsers = prev;
+          }
+        } else {
+          updatedUsers = prev.filter((name) => name !== userName);
+        }
+        
+        console.log("Updated typing users:", updatedUsers);
+        return updatedUsers;
+      });
+    });
 
-    // Listen for user count updates
+        
+
+
+
+
+
+
+
+
     
 
     // ✅ CLEANUP FUNCTION - This is crucial!
@@ -55,6 +84,8 @@ export default function Home() {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("message_received");
+      socket.off("new_user_signed_up");
+      socket.off("user_typing_status");
       socket.disconnect();
     };
   }, [])
@@ -67,7 +98,15 @@ export default function Home() {
         <div className="w-full flex flex-col items-center justify-center">
 
           <Chat setChat={setChat} user={user} chat={chat} socket={socketRef.current} />
-
+          
+          {/* Display typing users */}
+          {typingUsers.length > 0 && (
+            <div className="text-sm text-gray-500 italic mt-2 mb-4">
+              {typingUsers.length === 1 
+                ? `${typingUsers[0]} is typing...` 
+                : `${typingUsers.join(', ')} are typing...`}
+            </div>
+          )}
 
         </div> :
 

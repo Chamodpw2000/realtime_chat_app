@@ -1,6 +1,6 @@
 'use client'
-import { ChatMessageType } from "@/types";
-import { useRef, useState } from "react";
+
+import { useRef, useState, useEffect } from "react";
 import { VscSend } from "react-icons/vsc";
 import { FaCloudUploadAlt } from "react-icons/fa";
 
@@ -13,6 +13,20 @@ interface MessageInputProps {
 const MessageInput = ({ setChat, user, socket }: MessageInputProps) => {
   const uploadInput = useRef<HTMLInputElement | null>(null);
   const [inputValue, setInputValue] = useState("");
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = useRef(false);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (isTypingRef.current && socket) {
+        socket.emit("user_typing", { user: user.current, typing: false });
+      }
+    };
+  }, [socket, user]);
 
   const handleImageUpload = (e: any) => {
     console.log("handling file")
@@ -35,8 +49,6 @@ const MessageInput = ({ setChat, user, socket }: MessageInputProps) => {
       const newMessage = {
         content: inputValue,
         user: user.current,
-
-
         type: 'text'
       };
 
@@ -47,23 +59,22 @@ const MessageInput = ({ setChat, user, socket }: MessageInputProps) => {
       }
 
       socket.emit("send_message", newMessage);
-
-
-
       setInputValue("");
 
-
-
+      // Clear typing status when message is sent
+      if (isTypingRef.current) {
+        socket.emit("user_typing", { user: user.current, typing: false });
+        isTypingRef.current = false;
+      }
+      
+      // Clear any existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
     } else {
-
-
       uploadInput.current?.click();
-
     }
-
-
-
-
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -74,6 +85,44 @@ const MessageInput = ({ setChat, user, socket }: MessageInputProps) => {
 
   const userTyping = (e: any) => {
     setInputValue(e.target.value);
+    
+    const hasText = e.target.value.trim().length > 0;
+    
+    // If user is typing and has text
+    if (hasText) {
+      // Only emit if not already typing
+      if (!isTypingRef.current) {
+        socket.emit("user_typing", { user: user.current, typing: true });
+        isTypingRef.current = true;
+      }
+      
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      
+      // Set new timeout to stop typing after 2 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        if (isTypingRef.current) {
+          socket.emit("user_typing", { user: user.current, typing: false });
+          isTypingRef.current = false;
+        }
+        typingTimeoutRef.current = null;
+      }, 2000);
+      
+    } else {
+      // If input is empty, immediately stop typing
+      if (isTypingRef.current) {
+        socket.emit("user_typing", { user: user.current, typing: false });
+        isTypingRef.current = false;
+      }
+      
+      // Clear timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    }
   }
 
   return (

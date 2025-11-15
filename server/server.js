@@ -30,6 +30,11 @@ socket.on("user_joined", (data) => {
         console.log("New user signup broadcasted");
     });
 });
+
+socket.on("user_typing", (data) => {
+    console.log("User typing status: ", data);
+    socket.broadcast.emit("user_typing_status", data);
+});
     
     
 
