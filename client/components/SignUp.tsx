@@ -1,6 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 
-const SignUp = () => {
+interface SignUpProps {
+  user:any;
+  socket: any;
+}
+
+const SignUp = ({ user, socket }: SignUpProps) => {
+  const [input , setInput] = useState("");
   return (
     <div>SignUp</div>
   )
