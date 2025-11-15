@@ -26,7 +26,7 @@ const Chat = ({ setChat , user, chat, socket}: ChatProps) => {
     <>
     <div className='border border-black m-5 rounded-xl h-[calc(100vh-200px)] max-w-3xl  w-full p-5 overflow-y-auto gap-y-2 flex flex-col'> 
 {chat?.map((msg, index) => {
- msg = {...msg, own: msg.user === user.current};
+ msg = {...msg, own: msg?.user?.id === user.current?.id};
   return <ChatMessage key={index} content={msg.content} own={msg.own} type={msg.type} />;
 })}
       <div ref={messagesEndRef} />

@@ -23,6 +23,13 @@ socket.on("send_message", (data) => {
 
 
 });
+
+socket.on("user_joined", (data) => {
+    console.log("User signed up: ", data);
+    socket.broadcast.emit("new_user_signed_up", data, ()=>{
+        console.log("New user signup broadcasted");
+    });
+});
     
     
 

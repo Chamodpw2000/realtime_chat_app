@@ -9,9 +9,11 @@ import { io, Socket } from "socket.io-client";
 export default function Home() {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const user = useRef<string | null>(null);
   const [chat, setChat] = useState<ChatMessageType[]>([]);
+  const [input, setInput] = useState<string>("");
 
   
 
@@ -38,6 +40,12 @@ export default function Home() {
       setChat((prev) => [...prev, data]);
     });
 
+
+    socket.on("new_user_signed_up", (data : any) => {
+      console.log("New user signed up:", data);
+      setChat((prev) => [...prev, {content: `${data.user} has joined the chat`, type: 'system' , user: data}]);
+    });
+
     // Listen for user count updates
     
 
@@ -53,7 +61,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center">
 
-      {user.current ?
+      {isLoggedIn ?
 
 
         <div className="w-full flex flex-col items-center justify-center">
@@ -65,7 +73,7 @@ export default function Home() {
 
         <div className="w-full">
           
-        <SignUp user={user} socket={socketRef.current} />
+        <SignUp user={user} socket={socketRef.current} input={input} setInput={setInput} onLogin={() => setIsLoggedIn(true)} />
         
         </div>}
 
